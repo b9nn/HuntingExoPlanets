@@ -18,6 +18,7 @@ import seaborn as sns
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier, StackingClassifier
+from sklearn.metrics import roc_curve, auc, precision_recall_curve, average_precision_score
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC
 from sklearn.metrics import classification_report, confusion_matrix, accuracy_score, f1_score
