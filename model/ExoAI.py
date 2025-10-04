@@ -155,29 +155,27 @@ class ExoAI:
         return accuracy
     
     def tune_threshold(self, X_val, y_val):
-        """Optimize classification threshold on validation data"""
-        print("\nTuning classification threshold...")
-        probs = self.model.predict_proba(X_val)[:, 1]  # class 1 probabilities
-        best_thresh, best_acc = 0.5, 0
-
-        for t in np.linspace(0.1, 0.9, 81):
-            preds = (probs > t).astype(int)
-            acc = accuracy_score(y_val, preds)
-            if acc > best_acc:
-                best_thresh, best_acc = t, acc
-
-        self.best_threshold = best_thresh
-        print(f"   Best threshold: {best_thresh:.2f} (Accuracy: {best_acc:.4f})")
-        return best_thresh, best_acc
+        """Evaluate on validation set (multi-class doesn't need threshold tuning)"""
+        print("\nEvaluating on validation set...")
+        
+        # For multi-class, use argmax of probabilities
+        y_pred = self.model.predict(X_val)
+        val_accuracy = accuracy_score(y_val, y_pred)
+        
+        # No threshold needed for multi-class
+        self.best_threshold = None
+        
+        print(f"   Validation Accuracy: {val_accuracy:.4f}")
+        return None, val_accuracy
 
     def evaluate_model(self, X_test, y_test):
-        """Evaluate model with tuned threshold"""
+        """Evaluate model on test set"""
         print("\n" + "="*60)
-        print("Stacking Model Evaluation Results (with tuned threshold):")
+        print("Stacking Model Evaluation Results:")
         print("="*60)
 
-        probs = self.model.predict_proba(X_test)[:, 1]
-        y_pred = (probs > self.best_threshold).astype(int)
+        # Multi-class prediction using argmax
+        y_pred = self.model.predict(X_test)
 
         accuracy = accuracy_score(y_test, y_pred)
         print(f"\nTest Accuracy: {accuracy:.4f}")
@@ -195,13 +193,19 @@ class ExoAI:
         }
 
     def predict_exoplanet(self, features):
-        """Make prediction for a new exoplanet candidate with tuned threshold"""
+        """Make prediction for a new exoplanet candidate"""
+        # Get prediction and probabilities
+        prediction = self.model.predict([features])[0]
         probs = self.model.predict_proba([features])[0]
-        prediction = 1 if probs[1] > self.best_threshold else 0
+        
+        # Decode the prediction label
+        label = self.label_encoder.inverse_transform([prediction])[0]
+        confidence = probs[prediction]
 
         print("\nPredicting Exoplanet Classification...")
-        print(f"Prediction: {prediction}")
-        print(f"Confidence: {max(probs):.3f}")
+        print(f"Prediction: {label} (class {prediction})")
+        print(f"Confidence: {confidence:.3f}")
+        print(f"All probabilities: {probs}")
         return prediction, probs
     
     def save_model(self, output_dir='../model'):
@@ -215,7 +219,6 @@ class ExoAI:
         joblib.dump(self.model, f"{output_dir}/exoai_stacking_model.pkl")
         joblib.dump(self.scaler, f"{output_dir}/exoai_scaler.pkl")
         joblib.dump(self.label_encoder, f"{output_dir}/exoai_label_encoder.pkl")
-        joblib.dump(self.best_threshold, f"{output_dir}/exoai_threshold.pkl")
         
         print(f"   Model saved successfully to {output_dir}/")
     
@@ -297,7 +300,7 @@ def main():
     exoai.create_stacking_model()
     val_accuracy = exoai.train_model(X_train_scaled, y_train, X_val_scaled, y_val)
     
-    # tune threshold before evaluation
+    # final validation check
     exoai.tune_threshold(X_val_scaled, y_val)
     
     # evaluate on test set
