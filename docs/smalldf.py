@@ -15,7 +15,7 @@ required_columns = {
     "koi_steff": "Star’s Effective Temperature",
     "koi_srad": "Star’s Radius",
     "koi_slogg": "Star’s Surface Gravity",
-    "koi_disposition": "Disposition"
+    "koi_score": "Disposition"
 }
 
 # Read CSV, skipping comment lines if any
