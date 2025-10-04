@@ -37,10 +37,10 @@ class ExoAI:
         self.label_encoder = None
         self.feature_names = []
         
-    def load_data(self):
+    def load_data(self, csv_path='../docs/KOI.csv'):
         """Load the KOI dataset"""
         # read koi csv file, skip comment lines starting with #
-        self.koi_data = pd.read_csv('KOI.csv', comment='#', on_bad_lines='skip', low_memory=False)
+        self.koi_data = pd.read_csv(csv_path, comment='#', on_bad_lines='skip', low_memory=False)
         
         print(f"\nLoaded KOI: {len(self.koi_data)} rows, {len(self.koi_data.columns)} columns")
         
@@ -56,8 +56,7 @@ class ExoAI:
             'Transit Depth',
             'Stellar Effective Temperature',
             'Stellar Radius',
-            'Stellar Surface Gravity',
-            'Stellar Metallicity'
+            'Stellar Surface Gravity'
         ]
         
         label_col = 'koi_disposition'
@@ -77,7 +76,6 @@ class ExoAI:
             error_msg += f"  - Stellar Effective Temperature\n"
             error_msg += f"  - Stellar Radius\n"
             error_msg += f"  - Stellar Surface Gravity\n"
-            error_msg += f"  - Stellar Metallicity\n"
             raise ValueError(error_msg)
         
         # extract only the required features (ignore all other columns)
@@ -206,72 +204,58 @@ class ExoAI:
         print(f"Confidence: {max(probs):.3f}")
         return prediction, probs
     
-    def save_model(self):
+    def save_model(self, output_dir='../model'):
         """Save trained model for future use"""
         print("\nSaving Model...")
         
         # serialize model and preprocessors to disk
-        joblib.dump(self.model, "exoai_stacking_model.pkl")
-        joblib.dump(self.scaler, "exoai_scaler.pkl")
-        joblib.dump(self.label_encoder, "exoai_label_encoder.pkl")
-        joblib.dump(self.best_threshold, "exoai_threshold.pkl")
-
+        import os
+        os.makedirs(output_dir, exist_ok=True)
         
-        print("   Model saved successfully!")
+        joblib.dump(self.model, f"{output_dir}/exoai_stacking_model.pkl")
+        joblib.dump(self.scaler, f"{output_dir}/exoai_scaler.pkl")
+        joblib.dump(self.label_encoder, f"{output_dir}/exoai_label_encoder.pkl")
+        joblib.dump(self.best_threshold, f"{output_dir}/exoai_threshold.pkl")
+        
+        print(f"   Model saved successfully to {output_dir}/")
     
-    def create_visualizations(self, X_test, y_test, y_pred):
-        # 1. Confusion Matrix
+    def create_visualizations(self, X_test, y_test, y_pred, output_dir='../docs'):
+        """Create comprehensive visualizations"""
+        print("\nCreating Visualizations...")
+        
+        import os
+        os.makedirs(output_dir, exist_ok=True)
+        
+        fig = plt.figure(figsize=(12, 5))
+        
+        # plot confusion matrix heatmap
+        plt.subplot(1, 2, 1)
         cm = confusion_matrix(y_test, y_pred)
-        plt.figure(figsize=(6,6))
-        sns.heatmap(cm, annot=True, fmt="d", cmap="Blues")
-        plt.xlabel("Predicted")
-        plt.ylabel("Actual")
-        plt.title("Confusion Matrix")
-        plt.savefig('exoai_confusion_matrix.png', dpi=300, bbox_inches='tight')
-        plt.show()
-
-        # 2. Feature Importances
-        plt.figure(figsize=(8,6))
-        importances = self.model.feature_importances_
-        indices = np.argsort(importances)[::-1]
-        plt.bar(range(len(importances)), importances[indices])
-        plt.xticks(range(len(importances)), np.array(X_test.columns)[indices], rotation=90)
-        plt.title("Feature Importances")
-        plt.savefig('exoai_feature_importances.png', dpi=300, bbox_inches='tight')
-        plt.show()
-
-        # 3. ROC Curve
-        probs = self.model.predict_proba(X_test)[:, 1]
-        fpr, tpr, _ = roc_curve(y_test, probs)
-        roc_auc = auc(fpr, tpr)
-        plt.figure(figsize=(6,6))
-        plt.plot(fpr, tpr, label=f'ROC Curve (AUC = {roc_auc:.2f})')
-        plt.plot([0,1],[0,1],'--', color='gray')
-        plt.xlabel("False Positive Rate")
-        plt.ylabel("True Positive Rate")
-        plt.title("ROC Curve")
-        plt.legend(loc="lower right")
-        plt.savefig('exoai_roc_curve.png', dpi=300, bbox_inches='tight')
-        plt.show()
-
-        # 4. Precision-Recall Curve
-        precision, recall, _ = precision_recall_curve(y_test, probs)
-        ap = average_precision_score(y_test, probs)
-        plt.figure(figsize=(6,6))
-        plt.plot(recall, precision, label=f'PR Curve (AP = {ap:.2f})')
-        plt.xlabel("Recall")
-        plt.ylabel("Precision")
-        plt.title("Precision-Recall Curve")
-        plt.legend(loc="upper right")
-        plt.savefig('exoai_pr_curve.png', dpi=300, bbox_inches='tight')
-        plt.show()
-
-        # 5. Classification Report Heatmap
-        report = classification_report(y_test, y_pred, output_dict=True)
-        sns.heatmap(pd.DataFrame(report).iloc[:-1, :].T, annot=True, cmap="Blues")
-        plt.title("Classification Report Heatmap")
-        plt.savefig('exoai_classification_report.png', dpi=300, bbox_inches='tight')
-        plt.show()
+        sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', cbar_kws={'label': 'Count'})
+        plt.title('Confusion Matrix - Stacking Ensemble')
+        plt.ylabel('True Label')
+        plt.xlabel('Predicted Label')
+        
+        # plot top 10 feature importances from Random Forest base estimator
+        plt.subplot(1, 2, 2)
+        rf_model = self.model.named_estimators_['rf']
+        importance = rf_model.feature_importances_
+        
+        top_indices = np.argsort(importance)[-10:]
+        top_features = [self.feature_names[i] for i in top_indices]
+        top_importance = importance[top_indices]
+        
+        plt.barh(range(len(top_features)), top_importance, color='steelblue')
+        plt.yticks(range(len(top_features)), top_features)
+        plt.title('Top Feature Importance (Random Forest)')
+        plt.xlabel('Importance')
+        
+        plt.tight_layout()
+        output_path = f'{output_dir}/exoai_stacking_analysis.png'
+        plt.savefig(output_path, dpi=300, bbox_inches='tight')
+        plt.close()
+        
+        print(f"   Visualizations saved to {output_path}")
 
 
 def main():
@@ -320,7 +304,7 @@ def main():
     results = exoai.evaluate_model(X_test_scaled, y_test)
     
     # create visualizations and save model
-    exoai.create_visualizations(X_test_scaled, y_test, results['predictions'])
+    exoai.create_visualizations(X_test, y_test, results['predictions'])
     exoai.save_model()
     
     # demonstrate prediction on single example
