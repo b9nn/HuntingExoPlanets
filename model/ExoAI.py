@@ -7,7 +7,7 @@ ExoAI: Exoplanet Discovery and Classification
 A stacking ensemble machine learning system for classifying exoplanet candidates.
 Built for NASA Space Apps Challenge using Kepler Objects of Interest (KOI) dataset.
 
-Authors: Ben Gladney, (Input your name)
+Authors: Ben Gladney, Armaan Gupta
 Date: October, 2025
 """
 
@@ -47,17 +47,40 @@ class ExoAI:
     
     def preprocess_data(self):
         """Clean and preprocess the KOI data"""
-        # define relevant features for koi dataset based on research
-        key_features = ['koi_period', 'koi_prad', 'koi_duration', 'koi_depth', 
-                       'koi_steff', 'koi_srad', 'koi_slogg', 'koi_smet']
+        # define required features with descriptive names
+        required_features = [
+            'Orbital Period',
+            'Planetary Radius',
+            'Transit Duration',
+            'Transit Depth',
+            'Stellar Effective Temperature',
+            'Stellar Radius',
+            'Stellar Surface Gravity',
+            'Stellar Metallicity'
+        ]
         
         label_col = 'koi_disposition'
 
-        # filter to only available features
-        available_features = [f for f in key_features if f in self.koi_data.columns]
+        # validate that all required columns are present
+        missing_columns = [col for col in required_features if col not in self.koi_data.columns]
         
-        # extract features and fill missing values for numeric columns only
-        X = self.koi_data[available_features].copy()
+        if missing_columns:
+            error_msg = f"\nERROR: Missing required columns in CSV file:\n"
+            for col in missing_columns:
+                error_msg += f"  - {col}\n"
+            error_msg += f"\nRequired columns:\n"
+            error_msg += f"  - Orbital Period\n"
+            error_msg += f"  - Planetary Radius\n"
+            error_msg += f"  - Transit Duration\n"
+            error_msg += f"  - Transit Depth\n"
+            error_msg += f"  - Stellar Effective Temperature\n"
+            error_msg += f"  - Stellar Radius\n"
+            error_msg += f"  - Stellar Surface Gravity\n"
+            error_msg += f"  - Stellar Metallicity\n"
+            raise ValueError(error_msg)
+        
+        # extract only the required features (ignore all other columns)
+        X = self.koi_data[required_features].copy()
         X = X.select_dtypes(include=[np.number]).fillna(X.select_dtypes(include=[np.number]).median())
         
         # extract labels
@@ -69,6 +92,7 @@ class ExoAI:
         y = y[valid_indices]
         
         print(f"\nKOI Dataset: {X.shape[0]} samples, {X.shape[1]} features")
+        print(f"Using required columns: {', '.join(required_features)}")
         
         return X, y
     
