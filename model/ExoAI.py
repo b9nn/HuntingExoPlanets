@@ -17,10 +17,11 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.preprocessing import StandardScaler, LabelEncoder
-from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier, StackingClassifier
+from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier, StackingClassifier, GradientBoostingClassifier
 from sklearn.metrics import roc_curve, auc, precision_recall_curve, average_precision_score
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC
+from sklearn.naive_bayes import GaussianNB
 from sklearn.metrics import classification_report, confusion_matrix, accuracy_score, f1_score
 import joblib
 
@@ -96,61 +97,75 @@ class ExoAI:
         return X, y
     
     def create_stacking_model(self):
-        """Create the stacking ensemble model"""
-        print("\nCreating Stacking Ensemble Model...")
+        """Create the stacking ensemble model optimized for accuracy"""
+        print("\nCreating Accuracy-Optimized Stacking Ensemble...")
         
-        # define base estimators: random forest, extra trees, and svm
+        # define base estimators without class balancing (better for overall accuracy)
         base_estimators = [
             ('rf', RandomForestClassifier(n_estimators=100, random_state=42)),
             ('et', ExtraTreesClassifier(n_estimators=100, random_state=42)),
-            ('svm', SVC(probability=True, random_state=42))
+            ('gb', GradientBoostingClassifier(n_estimators=100, random_state=42)),
+            ('svm', SVC(probability=True, random_state=42)),
+            ('nb', GaussianNB())
         ]
         
         # create stacking classifier with logistic regression as meta-learner
         self.model = StackingClassifier(
             estimators=base_estimators,
-            final_estimator=LogisticRegression(max_iter=1000, random_state=42),
-            cv=3
+            final_estimator=LogisticRegression(max_iter=2000, random_state=42),
+            cv=5
         )
         
-        print("   Stacking model created with:")
-        print("   - Base: Random Forest, Extra Trees, SVM")
+        print("   Accuracy-optimized stacking model created with:")
+        print("   - Base: Random Forest, Extra Trees, Gradient Boosting, SVM, Naive Bayes")
         print("   - Meta: Logistic Regression")
+        print("   - Goal: Maximum overall accuracy")
         
         return self.model
     
     def train_model(self, X_train, y_train, X_val, y_val):
-        """Train stacking model with hyperparameter tuning"""
-        print("\nTraining Stacking Ensemble...")
+        """Train stacking model with strategic hyperparameter tuning"""
+        print("\nTraining Accuracy-Optimized Stacking Ensemble...")
         
-        # define hyperparameter search space for base estimators
+        # Strategic hyperparameter search - 48 fits (16 combinations × 3 folds)
         param_grid = {
-            'rf__n_estimators': [50, 100],
-            'rf__max_depth': [10, 15, None],
-            'et__n_estimators': [50, 100],
-            'et__max_depth': [10, 15, None],
-            'svm__C': [0.1, 1.0],
-            'svm__kernel': ['rbf']
+            'rf__n_estimators': [150, 200],
+            'rf__max_depth': [20, None],
+            'rf__min_samples_leaf': [1, 2],
+            'et__n_estimators': [150],
+            'et__max_depth': [None],
+            'gb__n_estimators': [100, 150],
+            'gb__learning_rate': [0.1],
+            'gb__max_depth': [5, 7],
+            'svm__C': [1.0, 10.0],
+            'svm__gamma': ['scale']
         }
         
-        # perform grid search with cross-validation
+        # perform grid search optimizing for accuracy
+        print("   Searching hyperparameters (48 fits total)...")
         grid_search = GridSearchCV(
             self.model, 
             param_grid, 
             cv=3, 
-            scoring='accuracy',
-            verbose=1
+            scoring='accuracy',  # Optimize for overall accuracy
+            verbose=1,
+            n_jobs=-1  # Use all CPU cores
         )
         
         grid_search.fit(X_train, y_train)
         self.model = grid_search.best_estimator_
         
-        print(f"\nBest parameters: {grid_search.best_params_}")
+        print(f"\nBest parameters found:")
+        for param, value in grid_search.best_params_.items():
+            print(f"   {param}: {value}")
+        print(f"Best CV Score: {grid_search.best_score_:.4f}")
         
         # evaluate on validation set
         y_pred = self.model.predict(X_val)
         accuracy = accuracy_score(y_val, y_pred)
-        print(f"Validation Accuracy: {accuracy:.4f}")
+        f1 = f1_score(y_val, y_pred, average='weighted')
+        print(f"\nValidation Accuracy: {accuracy:.4f}")
+        print(f"Validation F1-Score: {f1:.4f}")
         
         return accuracy
     
