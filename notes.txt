@@ -1,0 +1,2 @@
+refer to this for more info about the KOI dataset: https://exoplanetarchive.ipac.caltech.edu/docs/API_kepcandidate_columns.html
+
