@@ -12,9 +12,10 @@ required_columns = {
     "koi_prad": "Planetary Radius",
     "koi_duration": "Transit Duration",
     "koi_depth": "Transit Depth",
-    "koi_steff": "Star’s Effective Temperature (Kelvin)",
-    "koi_srad": "Star’s Radius (in solar radii)",
-    "koi_slogg": "Star’s Surface Gravity (log10(cm/s²))",
+    "koi_steff": "Star’s Effective Temperature",
+    "koi_srad": "Star’s Radius",
+    "koi_slogg": "Star’s Surface Gravity",
+    "koi_disposition": "Disposition"
 }
 
 # Read CSV, skipping comment lines if any
