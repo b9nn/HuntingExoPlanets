@@ -111,7 +111,7 @@ class ExoAI:
         self.model = StackingClassifier(
             estimators=base_estimators,
             final_estimator=LogisticRegression(max_iter=1000, random_state=42),
-            cv=5
+            cv=3
         )
         
         print("   Stacking model created with:")
@@ -218,39 +218,60 @@ class ExoAI:
         
         print("   Model saved successfully!")
     
-    def create_visualizations(self, results):
-        """Create comprehensive visualizations"""
-        print("\nCreating Visualizations...")
-        
-        fig = plt.figure(figsize=(12, 5))
-        
-        # plot confusion matrix heatmap
-        plt.subplot(1, 2, 1)
-        cm = results['confusion_matrix']
-        sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', cbar_kws={'label': 'Count'})
-        plt.title('Confusion Matrix - Stacking Ensemble')
-        plt.ylabel('True Label')
-        plt.xlabel('Predicted Label')
-        
-        # plot top 10 feature importances
-        plt.subplot(1, 2, 2)
-        rf_model = self.model.named_estimators_['rf']
-        importance = rf_model.feature_importances_
-        
-        top_indices = np.argsort(importance)[-10:]
-        top_features = [self.feature_names[i] for i in top_indices]
-        top_importance = importance[top_indices]
-        
-        plt.barh(range(len(top_features)), top_importance, color='steelblue')
-        plt.yticks(range(len(top_features)), top_features)
-        plt.title('Top 10 Feature Importance')
-        plt.xlabel('Importance')
-        
-        plt.tight_layout()
-        plt.savefig('exoai_stacking_analysis.png', dpi=300, bbox_inches='tight')
+    def create_visualizations(self, X_test, y_test, y_pred):
+        # 1. Confusion Matrix
+        cm = confusion_matrix(y_test, y_pred)
+        plt.figure(figsize=(6,6))
+        sns.heatmap(cm, annot=True, fmt="d", cmap="Blues")
+        plt.xlabel("Predicted")
+        plt.ylabel("Actual")
+        plt.title("Confusion Matrix")
+        plt.savefig('exoai_confusion_matrix.png', dpi=300, bbox_inches='tight')
         plt.show()
-        
-        print("   Visualizations saved as 'exoai_stacking_analysis.png'")
+
+        # 2. Feature Importances
+        plt.figure(figsize=(8,6))
+        importances = self.model.feature_importances_
+        indices = np.argsort(importances)[::-1]
+        plt.bar(range(len(importances)), importances[indices])
+        plt.xticks(range(len(importances)), np.array(X_test.columns)[indices], rotation=90)
+        plt.title("Feature Importances")
+        plt.savefig('exoai_feature_importances.png', dpi=300, bbox_inches='tight')
+        plt.show()
+
+        # 3. ROC Curve
+        probs = self.model.predict_proba(X_test)[:, 1]
+        fpr, tpr, _ = roc_curve(y_test, probs)
+        roc_auc = auc(fpr, tpr)
+        plt.figure(figsize=(6,6))
+        plt.plot(fpr, tpr, label=f'ROC Curve (AUC = {roc_auc:.2f})')
+        plt.plot([0,1],[0,1],'--', color='gray')
+        plt.xlabel("False Positive Rate")
+        plt.ylabel("True Positive Rate")
+        plt.title("ROC Curve")
+        plt.legend(loc="lower right")
+        plt.savefig('exoai_roc_curve.png', dpi=300, bbox_inches='tight')
+        plt.show()
+
+        # 4. Precision-Recall Curve
+        precision, recall, _ = precision_recall_curve(y_test, probs)
+        ap = average_precision_score(y_test, probs)
+        plt.figure(figsize=(6,6))
+        plt.plot(recall, precision, label=f'PR Curve (AP = {ap:.2f})')
+        plt.xlabel("Recall")
+        plt.ylabel("Precision")
+        plt.title("Precision-Recall Curve")
+        plt.legend(loc="upper right")
+        plt.savefig('exoai_pr_curve.png', dpi=300, bbox_inches='tight')
+        plt.show()
+
+        # 5. Classification Report Heatmap
+        report = classification_report(y_test, y_pred, output_dict=True)
+        sns.heatmap(pd.DataFrame(report).iloc[:-1, :].T, annot=True, cmap="Blues")
+        plt.title("Classification Report Heatmap")
+        plt.savefig('exoai_classification_report.png', dpi=300, bbox_inches='tight')
+        plt.show()
+
 
 def main():
     """Main ExoAI pipeline"""
@@ -298,7 +319,7 @@ def main():
     results = exoai.evaluate_model(X_test_scaled, y_test)
     
     # create visualizations and save model
-    exoai.create_visualizations(results)
+    exoai.create_visualizations(X_test_scaled, y_test, results['predictions'])
     exoai.save_model()
     
     # demonstrate prediction on single example
