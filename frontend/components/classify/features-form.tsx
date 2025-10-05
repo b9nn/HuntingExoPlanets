@@ -24,13 +24,13 @@ interface FeaturesFormProps {
 }
 
 const defaultFormValues: FeatureFormData = {
-  koi_period: 365.25,      // orbital_period_days
-  koi_prad: 1.0,           // planetary_radius_re
-  koi_duration: 13.5,      // transit_duration_hours
-  koi_depth: 1000,         // transit_depth_ppm
-  koi_steff: 5778,         // teff_k
-  koi_srad: 1.0,           // rstar_rs
-  koi_slogg: 4.44,         // logg
+  orbital_period_days: 365.25,
+  planetary_radius_re: 1.0,
+  transit_duration_hours: 13.5,
+  transit_depth_ppm: 1000,
+  teff_k: 5778,
+  rstar_rs: 1.0,
+  logg: 4.44,
 }
 
 export function FeaturesForm({ onSubmit, isLoading, defaultValues }: FeaturesFormProps) {
@@ -103,7 +103,7 @@ export function FeaturesForm({ onSubmit, isLoading, defaultValues }: FeaturesFor
             <div className="grid gap-4">
               <FormField
                 control={form.control}
-                name="koi_period"
+                name="orbital_period_days"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Orbital Period (days)</FormLabel>
@@ -133,7 +133,7 @@ export function FeaturesForm({ onSubmit, isLoading, defaultValues }: FeaturesFor
 
               <FormField
                 control={form.control}
-                name="koi_duration"
+                name="transit_duration_hours"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Transit Duration (hours)</FormLabel>
@@ -163,7 +163,7 @@ export function FeaturesForm({ onSubmit, isLoading, defaultValues }: FeaturesFor
 
               <FormField
                 control={form.control}
-                name="koi_prad"
+                name="planetary_radius_re"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Planetary Radius (Earth radii)</FormLabel>
@@ -193,7 +193,7 @@ export function FeaturesForm({ onSubmit, isLoading, defaultValues }: FeaturesFor
 
               <FormField
                 control={form.control}
-                name="koi_depth"
+                name="transit_depth_ppm"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Transit Depth (ppm)</FormLabel>
@@ -223,7 +223,7 @@ export function FeaturesForm({ onSubmit, isLoading, defaultValues }: FeaturesFor
 
               <FormField
                 control={form.control}
-                name="koi_steff"
+                name="teff_k"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Effective Temperature (K)</FormLabel>
@@ -253,7 +253,7 @@ export function FeaturesForm({ onSubmit, isLoading, defaultValues }: FeaturesFor
 
               <FormField
                 control={form.control}
-                name="koi_srad"
+                name="rstar_rs"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Stellar Radius (solar radii)</FormLabel>
@@ -283,7 +283,7 @@ export function FeaturesForm({ onSubmit, isLoading, defaultValues }: FeaturesFor
 
               <FormField
                 control={form.control}
-                name="koi_slogg"
+                name="logg"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Surface Gravity (log g)</FormLabel>

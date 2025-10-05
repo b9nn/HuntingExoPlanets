@@ -84,13 +84,13 @@ export type Mission = 'kepler' | 'k2' | 'tess';
 export type PredictionClass = 'confirmed' | 'candidate' | 'false_positive';
 
 export type FeatureFormData = {
-  koi_period: number;      // orbital_period_days
-  koi_prad: number;        // planetary_radius_re
-  koi_duration: number;    // transit_duration_hours
-  koi_depth: number;       // transit_depth_ppm
-  koi_steff: number;       // teff_k
-  koi_srad: number;        // rstar_rs
-  koi_slogg: number;       // logg
+  orbital_period_days: number;
+  planetary_radius_re: number;
+  transit_duration_hours: number;
+  transit_depth_ppm: number;
+  teff_k: number;
+  rstar_rs: number;
+  logg: number;
   modelId?: string;
 };
 

@@ -63,8 +63,26 @@ export default function ExplanationsPage() {
     }
   }
 
+  const FEATURE_LABELS: Record<string, string> = {
+    koi_period: "Orbital Period",
+    koi_duration: "Transit Duration",
+    koi_prad: "Planetary Radius",
+    koi_depth: "Transit Depth",
+    koi_steff: "Star’s Effective Temperature",
+    koi_srad: "Star’s Radius",
+    koi_slogg: "Star’s Surface Gravity",
+    orbital_period_days: "Orbital Period",
+    transit_duration_hours: "Transit Duration",
+    planetary_radius_re: "Planetary Radius",
+    transit_depth_ppm: "Transit Depth",
+    teff_k: "Star’s Effective Temperature",
+    rstar_rs: "Star’s Radius",
+    logg: "Star’s Surface Gravity",
+  }
+
   const renderWaterfallChart = (shapData: Array<{ feature: string; value: number; contribution: number }>) => {
     const sortedShap = [...shapData].sort((a, b) => Math.abs(b.contribution) - Math.abs(a.contribution))
+    const maxAbs = Math.max(0.000001, ...sortedShap.map(s => Math.abs(s.contribution)))
     let cumulative = 0
 
     return (
@@ -76,8 +94,8 @@ export default function ExplanationsPage() {
           
           return (
             <div key={index} className="flex items-center space-x-3">
-              <div className="w-32 text-sm font-medium truncate">
-                {item.feature}
+              <div className="w-44 text-sm font-medium truncate">
+                {FEATURE_LABELS[item.feature] ?? item.feature}
               </div>
               <div className="flex-1 bg-muted rounded-full h-6 relative overflow-hidden">
                 <div
@@ -85,13 +103,13 @@ export default function ExplanationsPage() {
                     isPositive ? 'bg-green-500' : 'bg-red-500'
                   }`}
                   style={{
-                    width: `${Math.min(width, 100)}%`,
+                    width: `${Math.min((Math.abs(item.contribution) / maxAbs) * 100, 100)}%`,
                     left: isPositive ? '0' : 'auto',
                     right: isPositive ? 'auto' : '0'
                   }}
                 />
                 <div className="absolute inset-0 flex items-center justify-center text-xs font-medium">
-                  {item.contribution > 0 ? '+' : ''}{item.contribution.toFixed(3)}
+                  {item.contribution > 0 ? '+' : ''}{Number.isFinite(item.contribution) ? item.contribution.toFixed(3) : '0.000'}
                 </div>
               </div>
               <div className="w-16 text-xs text-muted-foreground text-right">

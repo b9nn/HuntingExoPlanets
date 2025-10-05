@@ -325,7 +325,8 @@ def predict():
             normalized = normalize_feature_dict(features)
         except ValueError as ve:
             return jsonify({"error": str(ve)}), 400
-        X = impute_and_prepare_matrix(pd.DataFrame([normalized]))
+        X_df = pd.DataFrame([normalized])
+        X = impute_and_prepare_matrix(X_df)
         
         # Select stacking model only
         selected_model = model
@@ -341,22 +342,28 @@ def predict():
         # Decode prediction
         prediction_label = encoder.inverse_transform([prediction])[0]
         
+        # Approximate local contributions by perturbing each standardized feature
+        base_probs = selected_model.predict_proba(X)[0]
+        target_idx = int(prediction)
+        contributions = []
+        step = 0.25  # in standardized space
+        for i, col in enumerate(FEATURE_COLUMNS):
+            x_plus = X.copy(); x_plus[0, i] += step
+            x_minus = X.copy(); x_minus[0, i] -= step
+            p_plus = selected_model.predict_proba(x_plus)[0][target_idx]
+            p_minus = selected_model.predict_proba(x_minus)[0][target_idx]
+            contrib = float((p_plus - p_minus) / 2.0)
+            contributions.append({
+                "feature": ['orbital_period_days','transit_duration_hours','planetary_radius_re','transit_depth_ppm','teff_k','rstar_rs','logg'][i],
+                "value": float(X_df.iloc[0, i]),
+                "contribution": contrib
+            })
+
         # Create response
         response = {
             "prediction": prediction_label,
             "probabilities": class_probs,
-            "shap": [
-                {"feature": FRIENDLY_TO_KOI_INV[i], "value": float(X[0][idx]), "contribution": 0.0}
-                for idx, i in enumerate([
-                    'orbital_period_days',
-                    'transit_duration_hours',
-                    'planetary_radius_re',
-                    'transit_depth_ppm',
-                    'teff_k',
-                    'rstar_rs',
-                    'logg'
-                ])
-            ],
+            "shap": contributions,
             "rationale": "Model inference completed"
         }
         
@@ -379,9 +386,9 @@ def predict_csv():
             return jsonify({"error": "File must be a CSV"}), 400
         
         # Read CSV and try to normalize headers
-        df = pd.read_csv(file)
+        df_orig = pd.read_csv(file)
         # Enforce the exact cleaned headers from docs
-        missing_clean = [h for h in CLEAN_HEADERS if h not in df.columns]
+        missing_clean = [h for h in CLEAN_HEADERS if h not in df_orig.columns]
         if missing_clean:
             return jsonify({
                 "error": (
@@ -390,8 +397,8 @@ def predict_csv():
                 )
             }), 400
 
-        # Map from clean headers to koi_* columns
-        df = df.rename(columns=CLEAN_TO_KOI)
+        # Map from clean headers to koi_* columns for model inference
+        df = df_orig.rename(columns=CLEAN_TO_KOI).copy()
         
         # Validate columns (must have koi_* after rename)
         missing_cols = [col for col in FEATURE_COLUMNS if col not in df.columns]
@@ -408,13 +415,13 @@ def predict_csv():
         # Decode predictions
         prediction_labels = encoder.inverse_transform(predictions)
         
-        # Add results to dataframe
-        df['is_exoplanet'] = prediction_labels
-        df['confidence'] = probabilities.max(axis=1)
+        # Add results to original dataframe (keep original clean headers)
+        df_orig['is_exoplanet'] = prediction_labels
+        df_orig['confidence'] = probabilities.max(axis=1)
         
         # Create CSV response
         output = io.StringIO()
-        df.to_csv(output, index=False)
+        df_orig.to_csv(output, index=False)
         output.seek(0)
         
         # Return CSV file

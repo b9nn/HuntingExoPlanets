@@ -43,6 +43,41 @@ export function ResultPanel({ result, onViewExplanations, className }: ResultPan
     color: PREDICTION_CLASSES.find(c => c.value === key)?.color || "bg-gray-500"
   }))
 
+  // Nicify feature labels for KOI columns
+  const FEATURE_LABELS: Record<string, string> = {
+    // KOI keys
+    koi_period: "Orbital Period",
+    koi_duration: "Transit Duration",
+    koi_prad: "Planetary Radius",
+    koi_depth: "Transit Depth",
+    koi_steff: "Star’s Effective Temperature",
+    koi_srad: "Star’s Radius",
+    koi_slogg: "Star’s Surface Gravity",
+    // Friendly API keys
+    orbital_period_days: "Orbital Period",
+    transit_duration_hours: "Transit Duration",
+    planetary_radius_re: "Planetary Radius",
+    transit_depth_ppm: "Transit Depth",
+    teff_k: "Star’s Effective Temperature",
+    rstar_rs: "Star’s Radius",
+    logg: "Star’s Surface Gravity",
+  }
+
+  const formatContribution = (v: number) => {
+    const sign = v > 0 ? "+" : v < 0 ? "" : ""
+    const abs = Math.abs(v)
+    if (abs === 0) return "0.000"
+    if (abs < 0.001) return `${v.toExponential(2)}`
+    return `${sign}${abs.toFixed(3)}`.replace(/^\+?/, v > 0 ? "+" : "")
+  }
+
+  const topShap = (result.shap || [])
+    .slice()
+    .sort((a, b) => Math.abs(b.contribution) - Math.abs(a.contribution))
+    .slice(0, 5)
+
+  const maxAbs = Math.max(0.000001, ...topShap.map(s => Math.abs(s.contribution)))
+
   return (
     <div className={className}>
       {/* Main Prediction */}
@@ -112,28 +147,27 @@ export function ResultPanel({ result, onViewExplanations, className }: ResultPan
             <div className="space-y-3">
               <h4 className="font-medium">Key Contributing Features</h4>
               <div className="space-y-2">
-                {result.shap
-                  .sort((a, b) => Math.abs(b.contribution) - Math.abs(a.contribution))
-                  .slice(0, 5)
-                  .map((item, index) => (
+                {topShap.map((item, index) => (
                     <div key={index} className="flex items-center justify-between p-2 bg-muted/30 rounded">
-                      <span className="text-sm font-medium">{item.feature}</span>
+                      <span className="text-sm font-medium">{FEATURE_LABELS[item.feature] ?? item.feature}</span>
                       <div className="flex items-center space-x-2">
-                        <div className="w-20 bg-secondary rounded-full h-2">
+                        <div className="w-48 bg-secondary rounded-full h-2">
                           <div 
                             className={`h-2 rounded-full ${
                               item.contribution > 0 ? 'bg-green-500' : 'bg-red-500'
                             }`}
                             style={{ 
-                              width: `${Math.abs(item.contribution) * 100}%`,
+                              width: `${(Math.abs(item.contribution) / maxAbs) * 100}%`,
                               marginLeft: item.contribution > 0 ? '0' : 'auto'
                             }}
                           />
                         </div>
-                        <span className={`text-xs font-medium ${
-                          item.contribution > 0 ? 'text-green-600' : 'text-red-600'
-                        }`}>
-                          {item.contribution > 0 ? '+' : ''}{item.contribution.toFixed(3)}
+                        <span
+                          className={`text-xs font-medium ${
+                            item.contribution > 0 ? 'text-green-600' : item.contribution < 0 ? 'text-red-600' : 'text-muted-foreground'
+                          }`}
+                        >
+                          {formatContribution(item.contribution)}
                         </span>
                       </div>
                     </div>

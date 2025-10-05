@@ -161,7 +161,7 @@ export default function DashboardPage() {
               {bestModel?.name}
             </div>
             <p className="text-xs text-muted-foreground">
-              {(bestModel?.metrics.accuracy * 100).toFixed(1)}% accuracy
+              {((bestModel?.metrics?.accuracy ?? 0) * 100).toFixed(1)}% accuracy
             </p>
           </CardContent>
         </Card>
@@ -190,7 +190,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {features?.importances.length || 0}
+              {features?.importances?.length ?? 0}
             </div>
             <p className="text-xs text-muted-foreground">
               Key features analyzed

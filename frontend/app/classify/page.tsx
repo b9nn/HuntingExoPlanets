@@ -22,17 +22,10 @@ export default function ClassifyPage() {
     setLastPrediction(data)
     
     try {
+      const { modelId, ...features } = data as any
       const predictionResult = await predict({
-        modelId: data.modelId,
-        features: {
-          orbital_period_days: data.koi_period,
-          transit_duration_hours: data.koi_duration,
-          planetary_radius_re: data.koi_prad,
-          transit_depth_ppm: data.koi_depth,
-          teff_k: data.koi_steff,
-          rstar_rs: data.koi_srad,
-          logg: data.koi_slogg,
-        }
+        modelId,
+        features: features as any,
       })
       
       setResult(predictionResult)
