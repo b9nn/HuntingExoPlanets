@@ -17,7 +17,9 @@ import { Brain, Globe, BarChart3, FileText, Upload, AlertCircle } from "lucide-r
 import toast from "react-hot-toast"
 
 export default function ExplanationsPage() {
-  const [activeTab, setActiveTab] = useState('local')
+  const searchParams = useSearchParams()
+  const tabParam = searchParams.get('tab')
+  const [activeTab, setActiveTab] = useState(tabParam || 'local')
   const [localClassification, setLocalClassification] = useState<{
     features: FeatureFormData
     result: PredictResponse
@@ -34,6 +36,13 @@ export default function ExplanationsPage() {
     queryKey: ["shap-samples"],
     queryFn: getShapSample,
   })
+
+  useEffect(() => {
+    // Update tab from URL parameter
+    if (tabParam) {
+      setActiveTab(tabParam)
+    }
+  }, [tabParam])
 
   useEffect(() => {
     // Load last classification from localStorage
