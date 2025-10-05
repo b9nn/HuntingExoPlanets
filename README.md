@@ -121,8 +121,8 @@ This project was developed by **Git Push to Mars**:
 
 - **Armaan Gupta**
 - **Benjamin Gladney**
-- **Spandan**
-- **Abdullah**
+- **Spandan Chakrabarty**
+- **Abdullah Liaqat Ali**
 - **Joshua Elkind**
 
 ## 🙏 Acknowledgments
