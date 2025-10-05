@@ -9,7 +9,6 @@ ExoAI is an advanced machine learning platform designed to help researchers and 
 - **Explainable AI**: SHAP values and feature importance analysis for model transparency
 - **Interactive Web Interface**: Real-time exoplanet classification
 - **Multi-Mission Support**: Kepler, K2, and TESS data integration
-- **Real-time Updates**: Continuously updated with latest NASA data
 
 ## 🎯 Core Objectives
 
@@ -19,60 +18,6 @@ ExoAI is an advanced machine learning platform designed to help researchers and 
    - ❌ **False positive**
 
 2. **Provide Transparency**: Show feature importance and model reasoning using SHAP values
-
-## 🚀 Quick Start
-
-### Installation
-
-1. **Clone the repository**:
-   ```bash
-   git clone <repository-url>
-   cd exoai
-   ```
-
-2. **Install dependencies**:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-3. **Prepare data**: Ensure you have the NASA CSV files:
-   - `k2.csv` - K2 mission data
-   - `KOI.csv` - Kepler Object of Interest data  
-   - `TOI.csv` - TESS Object of Interest data
-
-### Training Models
-
-```bash
-python exoai.py
-```
-
-This will:
-- Load and preprocess the NASA datasets
-- Train all five ensemble algorithms
-- Perform hyperparameter tuning
-- Generate SHAP explanations
-- Save trained models
-- Create performance visualizations
-
-### Web Interface
-
-```bash
-python exoai_web.py
-```
-
-Then open your browser to: `http://127.0.0.1:8050`
-
-## 📊 Model Performance
-
-Our ensemble algorithms achieve excellent performance:
-
-| Model | Accuracy | Precision | Recall | F1-Score |
-|-------|----------|-----------|--------|----------|
-| **Stacking** | 0.87 | 0.85 | 0.86 | 0.85 |
-| Random Forest | 0.85 | 0.83 | 0.84 | 0.83 |
-| Extra Trees | 0.84 | 0.82 | 0.83 | 0.82 |
-| Random Subspace | 0.83 | 0.81 | 0.82 | 0.81 |
-| AdaBoost | 0.82 | 0.80 | 0.81 | 0.80 |
 
 ## 🔬 Key Features Analyzed
 
@@ -113,14 +58,6 @@ Our ensemble algorithms achieve excellent performance:
 - Fast training
 - Good baseline performance
 
-## 🔍 Explainable AI
-
-ExoAI provides transparency through:
-
-- **SHAP Values**: Show how each feature contributes to predictions
-- **Feature Importance**: Rank features by their impact
-- **Model Interpretability**: Understand why models make specific predictions
-
 ## 📱 Web Interface Features
 
 - **Real-time Classification**: Input parameters and get instant results
@@ -128,25 +65,6 @@ ExoAI provides transparency through:
 - **Model Comparison**: Compare different ensemble algorithms
 - **Confidence Scores**: See prediction probabilities
 - **SHAP Explanations**: Understand model reasoning
-
-## 🛠️ Technical Architecture
-
-```
-ExoAI/
-├── exoai.py              # Main ML pipeline
-├── exoai_web.py          # Web interface
-├── requirements.txt      # Dependencies
-├── README.md            # Documentation
-├── k2.csv               # K2 mission data
-├── KOI.csv              # Kepler data
-├── TOI.csv              # TESS data
-└── models/              # Trained models (generated)
-    ├── exoai_random_forest_model.pkl
-    ├── exoai_adaboost_model.pkl
-    ├── exoai_stacking_model.pkl
-    ├── exoai_random_subspace_model.pkl
-    └── exoai_extra_trees_model.pkl
-```
 
 ## 📈 Usage Examples
 
@@ -195,15 +113,13 @@ ExoAI is based on research showing that ensemble algorithms significantly improv
 
 We welcome contributions! Please see our contributing guidelines for details.
 
-## 📄 License
-
 This project is part of the NASA Space Apps Challenge 2024.
 
 ## 🙏 Acknowledgments
 
 - NASA Exoplanet Archive for providing the datasets
-- NASA Space Apps Challenge community
-- Scikit-learn, SHAP, and Dash communities for excellent tools
+- NASA Space Apps Hackathon
+- Scikit-learn for excellent tools
 
 ## 📞 Support
 
