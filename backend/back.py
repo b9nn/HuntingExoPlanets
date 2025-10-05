@@ -448,33 +448,24 @@ def get_dataset():
         if mission == 'kepler':
             src = os.path.join(docs_dir, 'KOI.csv')
         elif mission == 'k2':
-            # Prefer cleaned K2 dataset
-            src = os.path.join(docs_dir, 'k2_cleaned_exoplanet_data.csv')
+            # Use original K2 snapshot
+            src = os.path.join(docs_dir, 'k2.csv')
         elif mission == 'tess':
-            # Prefer cleaned TESS dataset
-            src = os.path.join(docs_dir, 'toi_cleaned_exoplanet_data.csv')
+            # Use original TESS snapshot
+            src = os.path.join(docs_dir, 'TOI.csv')
         else:
             src = os.path.join(docs_dir, 'KOI.csv')
 
         if not os.path.exists(src):
-            # Fallbacks for robustness
-            fallback = None
-            if mission == 'k2':
-                fallback = os.path.join(docs_dir, 'k2.csv')
-            elif mission == 'tess':
-                fallback = os.path.join(docs_dir, 'TOI.csv')
-            elif mission == 'kepler':
-                fallback = os.path.join(docs_dir, 'KOI.csv')
-            if fallback and os.path.exists(fallback):
-                src = fallback
-            else:
-                return jsonify({"rows": [], "total": 0})
+            return jsonify({"rows": [], "total": 0})
 
         # Load and attempt to normalize columns
         df = pd.read_csv(src, comment='#', low_memory=False)
         # If already in koi_* form, keep; else try to map from friendly headers and aliases
         df = rename_friendly_columns(df)
         df = normalize_dataframe_columns_to_koi(df)
+        # Ensure all koi_* columns exist for downstream display and inference
+        df = coerce_numeric(df, FEATURE_COLUMNS)
 
         # Build minimal display columns
         display_cols = [c for c in FEATURE_COLUMNS if c in df.columns]
@@ -492,6 +483,13 @@ def get_dataset():
             df['label'] = encoder.inverse_transform(preds)
         else:
             df['label'] = df[label_col].astype(str).str.lower().str.replace(' ', '_')
+            # Normalize common shorthand labels
+            df['label'] = df['label'].replace({
+                'fp': 'false_positive',
+                'falsepositive': 'false_positive',
+                'candidates': 'candidate',
+                'cand': 'candidate'
+            })
 
         # Keep only needed columns
         keep = ['id', 'mission'] + display_cols + ['label']
