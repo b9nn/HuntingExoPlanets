@@ -92,30 +92,28 @@ export default function DatasetsPage() {
                   <div className="space-y-2">
                     <h4 className="font-medium">Total Objects</h4>
                     <div className="text-2xl font-bold">
-                      {isLoading ? <Skeleton className="h-8 w-16" /> : dataset?.total || 0}
+                      {isLoading ? <Skeleton className="h-8 w-16" /> : (dataset?.total ?? 0)}
                     </div>
                   </div>
                   <div className="space-y-2">
                     <h4 className="font-medium">Confirmed</h4>
                     <div className="text-2xl font-bold text-green-600">
-                      {isLoading ? <Skeleton className="h-8 w-16" /> : 
-                        dataset?.rows.filter(r => r.label === 'confirmed').length || 0}
+                      {isLoading ? <Skeleton className="h-8 w-16" /> : (dataset?.classCounts?.confirmed ?? 0)}
                     </div>
                   </div>
                   <div className="space-y-2">
                     <h4 className="font-medium">Candidates</h4>
                     <div className="text-2xl font-bold text-yellow-600">
-                      {isLoading ? <Skeleton className="h-8 w-16" /> : 
-                        dataset?.rows.filter(r => r.label === 'candidate').length || 0}
+                      {isLoading ? <Skeleton className="h-8 w-16" /> : (dataset?.classCounts?.candidate ?? 0)}
                     </div>
-                  </div>
                   <div className="space-y-2">
-                    <h4 className="font-medium">False Positives</h4>
+                    <h4 className="font-medium">False Positive</h4>
                     <div className="text-2xl font-bold text-red-600">
-                      {isLoading ? <Skeleton className="h-8 w-16" /> : 
-                        dataset?.rows.filter(r => r.label === 'false_positive').length || 0}
+                      {isLoading ? <Skeleton className="h-8 w-16" /> : (dataset?.classCounts?.false_positive ?? 0)}
                     </div>
                   </div>
+                  </div>
+                  {/* Removed duplicate per-page false positives block */}
                 </div>
               </CardContent>
             </Card>
@@ -286,3 +284,4 @@ export default function DatasetsPage() {
     </div>
   )
 }
+

@@ -5,12 +5,16 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export function formatNumber(value: number, decimals: number = 2): string {
-  return value.toFixed(decimals);
+export function formatNumber(value: number | string | null | undefined, decimals: number = 2): string {
+  const num = typeof value === 'number' ? value : value != null ? Number(value) : NaN;
+  if (!Number.isFinite(num)) return 'NA';
+  return num.toFixed(decimals);
 }
 
-export function formatPercentage(value: number, decimals: number = 1): string {
-  return `${(value * 100).toFixed(decimals)}%`;
+export function formatPercentage(value: number | string | null | undefined, decimals: number = 1): string {
+  const num = typeof value === 'number' ? value : value != null ? Number(value) : NaN;
+  if (!Number.isFinite(num)) return 'NA';
+  return `${(num * 100).toFixed(decimals)}%`;
 }
 
 export function formatDate(date: string | Date): string {
@@ -55,9 +59,11 @@ export function generateId(): string {
 }
 
 export function downloadCSV(data: any[], filename: string): void {
+  if (!data || data.length === 0) return;
+  const headers = Object.keys(data[0] || {});
   const csv = [
-    Object.keys(data[0]).join(','),
-    ...data.map(row => Object.values(row).join(','))
+    headers.join(','),
+    ...data.map(row => headers.map(h => row[h]).join(','))
   ].join('\n');
   
   const blob = new Blob([csv], { type: 'text/csv' });

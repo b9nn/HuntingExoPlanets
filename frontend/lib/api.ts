@@ -148,16 +148,9 @@ export const apiClient = {
 
   // Make prediction
   async predict(data: PredictBody): Promise<PredictResponse> {
-    try {
-      const response = await api.post<PredictResponse>(API_ENDPOINTS.predict, data);
-      // Clear the offline flag since backend is responding
-      sessionStorage.removeItem('backend-offline-shown');
-      return response.data;
-    } catch (error) {
-      // Use mock prediction with actual features
-      const mockResult = mockPredictWithFeatures(data.features);
-      return handleApiError(error, mockResult);
-    }
+    const response = await api.post<PredictResponse>(API_ENDPOINTS.predict, data);
+    sessionStorage.removeItem('backend-offline-shown');
+    return response.data;
   },
 
   // Get dataset
@@ -167,28 +160,15 @@ export const apiClient = {
     limit?: number;
     search?: string;
   } = {}): Promise<DatasetResponse> {
-    try {
-      const response = await api.get<DatasetResponse>(API_ENDPOINTS.dataset, {
-        params: {
-          mission: params.mission,
-          page: params.page || 1,
-          limit: params.limit || 50,
-          search: params.search,
-        },
-      });
-      return response.data;
-    } catch (error) {
-      // Filter mock data by mission if specified
-      let filteredRows = mockDataset.rows;
-      if (params.mission) {
-        filteredRows = mockDataset.rows.filter(row => row.mission === params.mission);
-      }
-      
-      return handleApiError(error, {
-        rows: filteredRows,
-        total: filteredRows.length
-      });
-    }
+    const response = await api.get<DatasetResponse>(API_ENDPOINTS.dataset, {
+      params: {
+        mission: params.mission,
+        page: params.page || 1,
+        limit: params.limit || 50,
+        search: params.search,
+      },
+    });
+    return response.data;
   },
 
   // Get SHAP samples

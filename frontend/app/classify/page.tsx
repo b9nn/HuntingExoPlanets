@@ -25,14 +25,13 @@ export default function ClassifyPage() {
       const predictionResult = await predict({
         modelId: data.modelId,
         features: {
-          orbital_period_days: data.orbital_period_days,
-          transit_duration_hours: data.transit_duration_hours,
-          planetary_radius_re: data.planetary_radius_re,
-          transit_depth_ppm: data.transit_depth_ppm,
-          teff_k: data.teff_k,
-          rstar_rs: data.rstar_rs,
-          logg: data.logg,
-          feh: data.feh,
+          orbital_period_days: data.koi_period,
+          transit_duration_hours: data.koi_duration,
+          planetary_radius_re: data.koi_prad,
+          transit_depth_ppm: data.koi_depth,
+          teff_k: data.koi_steff,
+          rstar_rs: data.koi_srad,
+          logg: data.koi_slogg,
         }
       })
       

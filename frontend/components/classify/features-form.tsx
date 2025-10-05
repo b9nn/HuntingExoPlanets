@@ -79,9 +79,6 @@ export function FeaturesForm({ onSubmit, isLoading, defaultValues }: FeaturesFor
                     <SelectItem key={model.id} value={model.id}>
                       <div className="flex items-center justify-between w-full">
                         <span>{model.name}</span>
-                        <Badge variant="outline" className="ml-2">
-                          {model.metrics.accuracy.toFixed(2)}
-                        </Badge>
                       </div>
                     </SelectItem>
                   ))}

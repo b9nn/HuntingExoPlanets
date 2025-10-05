@@ -17,10 +17,7 @@ import { Brain, Globe, BarChart3, FileText, Upload, AlertCircle } from "lucide-r
 import toast from "react-hot-toast"
 
 export default function ExplanationsPage() {
-  const searchParams = useSearchParams()
-  const initialTab = searchParams.get('tab') || 'global'
-  
-  const [activeTab, setActiveTab] = useState(initialTab)
+  const [activeTab, setActiveTab] = useState('local')
   const [localClassification, setLocalClassification] = useState<{
     features: FeatureFormData
     result: PredictResponse
@@ -28,7 +25,7 @@ export default function ExplanationsPage() {
   } | null>(null)
   const [jsonInput, setJsonInput] = useState("")
 
-  const { data: globalFeatures, isLoading: featuresLoading } = useQuery({
+  const { data: globalFeatures } = useQuery({
     queryKey: ["features"],
     queryFn: getFeatures,
   })
@@ -162,75 +159,29 @@ export default function ExplanationsPage() {
 
       {/* Main Content */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="global" className="flex items-center space-x-2">
-            <Globe className="h-4 w-4" />
-            <span>Global</span>
-          </TabsTrigger>
-          <TabsTrigger value="local" className="flex items-center space-x-2">
-            <BarChart3 className="h-4 w-4" />
-            <span>Local</span>
-          </TabsTrigger>
-        </TabsList>
-
-        {/* Global Explanations */}
-        <TabsContent value="global" className="space-y-6">
-          <div className="grid gap-6 lg:grid-cols-2">
-            <FeatureImportanceBar
-              data={globalFeatures?.importances || []}
-            />
-            
-            <Card>
-              <CardHeader>
-                <CardTitle>Global Feature Insights</CardTitle>
-                <CardDescription>
-                  Understanding feature importance across the entire dataset
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-3">
-                  <h4 className="font-medium">Key Findings</h4>
-                  <ul className="text-sm text-muted-foreground space-y-2">
-                    <li>• <strong>Orbital Period</strong> is the most important feature for classification</li>
-                    <li>• <strong>Transit Depth</strong> provides strong signal for confirmed exoplanets</li>
-                    <li>• <strong>Planetary Radius</strong> helps distinguish between different planet types</li>
-                    <li>• <strong>Stellar Parameters</strong> (Teff, R*, log g) provide important context</li>
-                  </ul>
-                </div>
-                
-                <div className="space-y-3">
-                  <h4 className="font-medium">Model Behavior</h4>
-                  <ul className="text-sm text-muted-foreground space-y-2">
-                    <li>• Ensemble models weight features differently</li>
-                    <li>• Stacking model combines insights from all base models</li>
-                    <li>• Feature interactions are captured through ensemble diversity</li>
-                    <li>• SHAP values reveal non-linear relationships</li>
-                  </ul>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        {/* Local Explanations */}
+        {/* Local Explanations only */}
         <TabsContent value="local" className="space-y-6">
           <div className="grid gap-6 lg:grid-cols-2">
             {/* SHAP Waterfall Chart */}
             <Card>
               <CardHeader>
-                <CardTitle>SHAP Waterfall</CardTitle>
+                <CardTitle>SHAP Waterfall (Most Recent)</CardTitle>
                 <CardDescription>
                   Feature contributions to the final prediction
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                {localClassification?.result.shap ? (
-                  renderWaterfallChart(localClassification.result.shap)
+              <CardContent className="pt-2">
+                {localClassification?.result?.shap && Array.isArray(localClassification.result.shap) && localClassification.result.shap.length > 0 ? (
+                  renderWaterfallChart(
+                    localClassification.result.shap.filter((s: any) => 
+                      s && Number.isFinite(s.contribution) && !isNaN(s.contribution)
+                    )
+                  )
                 ) : (
                   <div className="text-center py-8 text-muted-foreground">
                     <Brain className="h-12 w-12 mx-auto mb-4 opacity-50" />
                     <p>No SHAP data available</p>
-                    <p className="text-sm">Classify an exoplanet to see local explanations</p>
+                    <p className="text-sm">Please upload a CSV or submit features on the Classify page to generate explanations.</p>
                   </div>
                 )}
               </CardContent>

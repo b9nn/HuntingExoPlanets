@@ -11,11 +11,28 @@ interface FeatureImportanceBarProps {
 }
 
 export function FeatureImportanceBar({ data, className }: FeatureImportanceBarProps) {
-  const chartData = data.map(item => ({
+  const safeData = (data || []).filter(d => Number.isFinite(d.importance) && !isNaN(d.importance))
+  const chartData = safeData.map(item => ({
     name: FEATURE_LABELS[item.name as keyof typeof FEATURE_LABELS] || item.name,
-    importance: item.importance,
+    importance: Math.max(0, Math.min(1, item.importance)),
     originalName: item.name
   }))
+
+  if (!chartData.length) {
+    return (
+      <Card className={className}>
+        <CardHeader>
+          <CardTitle>Feature Importance</CardTitle>
+          <CardDescription>
+            Top features contributing to model predictions
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="text-sm text-muted-foreground">No feature importance data available.</div>
+        </CardContent>
+      </Card>
+    )
+  }
 
   return (
     <Card className={className}>

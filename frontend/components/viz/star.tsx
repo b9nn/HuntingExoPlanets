@@ -2,7 +2,7 @@
 
 import { useRef } from "react"
 import { useFrame } from "@react-three/fiber"
-import { Mesh } from "three"
+import { Mesh, Color } from "three"
 
 interface StarProps {
   temperature?: number
@@ -38,11 +38,13 @@ export function Star({
 
   return (
     <mesh ref={meshRef} position={position}>
-      <sphereGeometry args={[radius, 32, 32]} />
-      <meshBasicMaterial 
-        color={color}
-        emissive={color}
-        emissiveIntensity={0.3}
+      <sphereGeometry args={[radius, 48, 48]} />
+      <meshStandardMaterial 
+        color={new Color(color[0], color[1], color[2])}
+        emissive={new Color(color[0], color[1], color[2])}
+        emissiveIntensity={1.2}
+        metalness={0.1}
+        roughness={0.5}
       />
     </mesh>
   )

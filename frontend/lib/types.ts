@@ -67,6 +67,7 @@ export type DatasetRow = {
 export type DatasetResponse = {
   rows: DatasetRow[];
   total: number;
+  classCounts?: { confirmed: number; candidate: number; false_positive: number };
 };
 
 export type ShapSample = {

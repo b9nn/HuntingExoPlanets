@@ -66,9 +66,20 @@ export function CSVUpload({ className }: CSVUploadProps) {
       setProcessedData(rows)
       toast.success("CSV processed successfully!")
       
-    } catch (error) {
+    } catch (error: any) {
       console.error("Processing error:", error)
-      toast.error("Failed to process CSV. Please check the file format.")
+      // Try to read text if backend returned JSON error blob
+      if (error?.response?.data instanceof Blob) {
+        try {
+          const text = await (error.response.data as Blob).text()
+          const parsed = JSON.parse(text)
+          toast.error(parsed.error || "Failed to process CSV.")
+        } catch {
+          toast.error("Failed to process CSV. Please check the file format.")
+        }
+      } else {
+        toast.error("Failed to process CSV. Please check the file format.")
+      }
     } finally {
       setIsProcessing(false)
     }
@@ -128,8 +139,9 @@ export function CSVUpload({ className }: CSVUploadProps) {
                 Drag & drop a CSV file here, or click to select
               </p>
           <p className="text-sm text-muted-foreground">
-            CSV must contain columns: koi_period, koi_duration, koi_prad, 
-            koi_depth, koi_steff, koi_srad, koi_slogg
+            CSV must contain these exact headers (like docs/cleaned_exoplanet_data.csv):
+            "Orbital Period", "Planetary Radius", "Transit Duration", "Transit Depth",
+            "Star’s Effective Temperature", "Star’s Radius", "Star’s Surface Gravity"
           </p>
             </div>
           )}
@@ -249,9 +261,9 @@ export function CSVUpload({ className }: CSVUploadProps) {
             CSV Format Requirements
           </h4>
           <ul className="text-sm text-muted-foreground space-y-1">
-            <li>• CSV must contain these exact column names:</li>
-            <li>• koi_period, koi_duration, koi_prad</li>
-            <li>• koi_depth, koi_steff, koi_srad, koi_slogg</li>
+            <li>• Required headers (exact match):</li>
+            <li>• Orbital Period, Planetary Radius, Transit Duration</li>
+            <li>• Transit Depth, Star’s Effective Temperature, Star’s Radius, Star’s Surface Gravity</li>
             <li>• All values must be numeric</li>
             <li>• Results will include 'is_exoplanet' and 'confidence' columns</li>
           </ul>

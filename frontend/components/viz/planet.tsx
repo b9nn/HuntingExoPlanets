@@ -2,7 +2,7 @@
 
 import { useRef } from "react"
 import { useFrame } from "@react-three/fiber"
-import { Mesh } from "three"
+import { Mesh, DoubleSide, Color } from "three"
 
 interface PlanetProps {
   radius?: number
@@ -40,12 +40,19 @@ export function Planet({
 
   return (
     <mesh ref={meshRef}>
-      <sphereGeometry args={[radius, 16, 16]} />
-      <meshBasicMaterial 
-        color={color}
-        emissive={color}
+      <sphereGeometry args={[radius, 48, 48]} />
+      <meshStandardMaterial 
+        color={new Color(color)}
+        metalness={0.2}
+        roughness={0.8}
+        emissive={new Color(color)}
         emissiveIntensity={emissiveIntensity}
       />
+      {/* Atmosphere glow */}
+      <mesh>
+        <sphereGeometry args={[radius * 1.03, 48, 48]} />
+        <meshBasicMaterial color={new Color(color)} transparent opacity={0.15} side={DoubleSide} />
+      </mesh>
     </mesh>
   )
 }
