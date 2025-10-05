@@ -8,7 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { KpiCard } from "@/components/cards/kpi-card"
 import { ModelCard } from "@/components/cards/model-card"
 import { ConfusionHeatmap } from "@/components/charts/confusion-heatmap"
-import { FeatureImportanceBar } from "@/components/charts/feature-importance-bar"
+import { ShapWaterfall } from "@/components/charts/shap-waterfall"
 import { getMetrics, getModels, getFeatures } from "@/lib/api"
 import { PREDICTION_CLASSES } from "@/lib/constants"
 import { Target, TrendingUp, Brain, Zap } from "lucide-react"
@@ -29,28 +29,34 @@ export default function DashboardPage() {
     queryFn: getFeatures,
   })
 
+  const normalizePct = (val?: number | null) => {
+    if (val === null || val === undefined) return 0
+    // Accept 0-1 or 0-100
+    return val > 1 ? val / 100 : val
+  }
+
   const kpis = metrics && metrics.overall ? [
     {
       title: "Overall Accuracy",
-      value: metrics.overall.accuracy || 0,
+      value: normalizePct(metrics.overall.accuracy),
       icon: Target,
       description: "Model performance across all classes",
     },
     {
       title: "Precision",
-      value: metrics.overall.precision || 0,
+      value: normalizePct(metrics.overall.precision),
       icon: TrendingUp,
       description: "True positives / (True positives + False positives)",
     },
     {
       title: "Recall",
-      value: metrics.overall.recall || 0,
+      value: normalizePct(metrics.overall.recall),
       icon: Brain,
       description: "True positives / (True positives + False negatives)",
     },
     {
       title: "F1 Score",
-      value: metrics.overall.f1 || 0,
+      value: normalizePct(metrics.overall.f1),
       icon: Zap,
       description: "Harmonic mean of precision and recall",
     },
@@ -58,9 +64,11 @@ export default function DashboardPage() {
 
   const getBestModel = () => {
     if (!models || models.length === 0) return null
-    return models.reduce((best, current) => 
-      (current.metrics?.accuracy || 0) > (best.metrics?.accuracy || 0) ? current : best
-    )
+    return models.reduce((best, current) => {
+      const a = normalizePct(current.metrics?.accuracy || 0)
+      const b = normalizePct(best.metrics?.accuracy || 0)
+      return a > b ? current : best
+    })
   }
 
   const bestModel = getBestModel()
@@ -125,7 +133,7 @@ export default function DashboardPage() {
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-            {models?.map((model) => (
+            {models?.slice().sort((a,b)=>normalizePct((b.metrics?.accuracy)||0)-normalizePct((a.metrics?.accuracy)||0)).map((model) => (
               <ModelCard
                 key={model.id}
                 model={model}
@@ -143,8 +151,10 @@ export default function DashboardPage() {
           labels={PREDICTION_CLASSES.map(c => c.label)}
         />
         
-        <FeatureImportanceBar
-          data={features?.importances || []}
+        <ShapWaterfall
+          shap={(features?.importances || []).map(i=>({feature:i.name, value: 0, contribution: (i.importance||0)}))}
+          title="SHAP Feature Importance"
+          description="Global feature contributions"
         />
       </div>
 
@@ -161,7 +171,7 @@ export default function DashboardPage() {
               {bestModel?.name}
             </div>
             <p className="text-xs text-muted-foreground">
-              {((bestModel?.metrics?.accuracy ?? 0) * 100).toFixed(1)}% accuracy
+              {(normalizePct(bestModel?.metrics?.accuracy ?? 0)*100).toFixed(1)}% accuracy
             </p>
           </CardContent>
         </Card>

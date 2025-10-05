@@ -13,11 +13,16 @@ interface ModelCardProps {
 }
 
 export function ModelCard({ model, isBest = false, className }: ModelCardProps) {
+  const normalizePct = (val?: number | null) => {
+    if (val === null || val === undefined) return 0
+    return val > 1 ? val / 100 : val
+  }
+
   const metrics = [
-    { label: "Accuracy", value: model.metrics?.accuracy || 0 },
-    { label: "Precision", value: model.metrics?.precision || 0 },
-    { label: "Recall", value: model.metrics?.recall || 0 },
-    { label: "F1 Score", value: model.metrics?.f1 || 0 },
+    { label: "Accuracy", value: normalizePct(model.metrics?.accuracy) },
+    { label: "Precision", value: normalizePct(model.metrics?.precision) },
+    { label: "Recall", value: normalizePct(model.metrics?.recall) },
+    { label: "F1 Score", value: normalizePct(model.metrics?.f1) },
   ]
 
   return (
@@ -41,9 +46,7 @@ export function ModelCard({ model, isBest = false, className }: ModelCardProps) 
           <div key={metric.label} className="space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">{metric.label}</span>
-              <span className="font-medium">
-                {(metric.value * 100).toFixed(1)}%
-              </span>
+              <span className="font-medium">{(metric.value * 100).toFixed(1)}%</span>
             </div>
             <Progress 
               value={metric.value * 100} 

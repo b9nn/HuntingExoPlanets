@@ -26,9 +26,7 @@ export function KpiCard({
   description,
   className
 }: KpiCardProps) {
-  const formatValue = (val: number) => {
-    return (val * 100).toFixed(1)
-  }
+  const formatValue = (val: number) => (val * 100).toFixed(1)
 
   const getTrendIcon = () => {
     if (!change) return Minus
