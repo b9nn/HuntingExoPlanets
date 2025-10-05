@@ -448,15 +448,27 @@ def get_dataset():
         if mission == 'kepler':
             src = os.path.join(docs_dir, 'KOI.csv')
         elif mission == 'k2':
-            # Use provided K2 snapshot if available
-            src = os.path.join(docs_dir, 'k2.csv')
+            # Prefer cleaned K2 dataset
+            src = os.path.join(docs_dir, 'k2_cleaned_exoplanet_data.csv')
         elif mission == 'tess':
-            src = os.path.join(docs_dir, 'TOI.csv')
+            # Prefer cleaned TESS dataset
+            src = os.path.join(docs_dir, 'toi_cleaned_exoplanet_data.csv')
         else:
             src = os.path.join(docs_dir, 'KOI.csv')
 
         if not os.path.exists(src):
-            return jsonify({"rows": [], "total": 0})
+            # Fallbacks for robustness
+            fallback = None
+            if mission == 'k2':
+                fallback = os.path.join(docs_dir, 'k2.csv')
+            elif mission == 'tess':
+                fallback = os.path.join(docs_dir, 'TOI.csv')
+            elif mission == 'kepler':
+                fallback = os.path.join(docs_dir, 'KOI.csv')
+            if fallback and os.path.exists(fallback):
+                src = fallback
+            else:
+                return jsonify({"rows": [], "total": 0})
 
         # Load and attempt to normalize columns
         df = pd.read_csv(src, comment='#', low_memory=False)

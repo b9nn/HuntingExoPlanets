@@ -106,14 +106,13 @@ export default function DatasetsPage() {
                     <div className="text-2xl font-bold text-yellow-600">
                       {isLoading ? <Skeleton className="h-8 w-16" /> : (dataset?.classCounts?.candidate ?? 0)}
                     </div>
+                  </div>
                   <div className="space-y-2">
                     <h4 className="font-medium">False Positive</h4>
                     <div className="text-2xl font-bold text-red-600">
                       {isLoading ? <Skeleton className="h-8 w-16" /> : (dataset?.classCounts?.false_positive ?? 0)}
                     </div>
                   </div>
-                  </div>
-                  {/* Removed duplicate per-page false positives block */}
                 </div>
               </CardContent>
             </Card>
