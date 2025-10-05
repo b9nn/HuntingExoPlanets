@@ -2,11 +2,9 @@ import pandas as pd
 import sys
 
 # Input CSV file (replace with your actual filename)
-input_file = "./KOI.csv"
+input_file = "./TOI.csv"
 
-# Output CSV file
-output_file = "KOI_KF.csv"
-
+'''
 required_columns = {
     "koi_period": "Orbital Period",
     "koi_prad": "Planetary Radius",
@@ -17,6 +15,20 @@ required_columns = {
     "koi_slogg": "Star’s Surface Gravity",
     "koi_score": "Disposition"
 }
+'''
+
+required_columns = {
+    "pl_orbper": "Orbital Period [days]",
+    "pl_rade": "Planetary Radius [Earth Radius]",
+    "pl_trandurh": "Transit Duration [hours]",
+    "pl_trandep": "Transit Depth [ppm]",
+    "st_teff": "Star’s Effective Temperature [K]",
+    "st_rad": "Star’s Radius [Solar Radius]",
+    "st_logg": "Star’s Surface Gravity [cm/s²]",
+    "tfopwg_disp": "Disposition"
+}
+
+
 
 # Read CSV, skipping comment lines if any
 try:
@@ -35,6 +47,6 @@ if missing_cols:
 df_clean = df[list(required_columns.keys())].rename(columns=required_columns)
 
 # Optionally save to new CSV
-output_file = "cleaned_exoplanet_data.csv"
+output_file = "toi_cleaned_exoplanet_data.csv"
 df_clean.to_csv(output_file, index=False)
 print(f"Cleaned CSV saved to {output_file}")
