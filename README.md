@@ -115,6 +115,16 @@ We welcome contributions! Please see our contributing guidelines for details.
 
 This project is part of the NASA Space Apps Challenge 2024.
 
+## 👥 Contributors
+
+This project was developed by **Git Push to Mars**:
+
+- **Armaan Gupta**
+- **Benjamin Gladney**
+- **Spandan**
+- **Abdullah**
+- **Joshua Elkind**
+
 ## 🙏 Acknowledgments
 
 - NASA Exoplanet Archive for providing the datasets
