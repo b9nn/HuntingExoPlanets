@@ -25,9 +25,17 @@ import { DEFAULT_BACKEND_URL, API_ENDPOINTS } from './constants';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || DEFAULT_BACKEND_URL;
 
+// Debug logging (only in development)
+if (process.env.NODE_ENV === 'development') {
+  console.log('API Configuration:');
+  console.log('- NEXT_PUBLIC_BACKEND_URL:', process.env.NEXT_PUBLIC_BACKEND_URL);
+  console.log('- DEFAULT_BACKEND_URL:', DEFAULT_BACKEND_URL);
+  console.log('- Final API_BASE_URL:', API_BASE_URL);
+}
+
 const api = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 10000,
+  timeout: 5000, // Reduced timeout
   headers: {
     'Content-Type': 'application/json',
   },
@@ -55,9 +63,23 @@ api.interceptors.response.use(
 
 const handleApiError = (error: unknown, fallbackData: any) => {
   console.error('API call failed, using mock data:', error);
-  toast.error('Backend offline — using mock data', {
-    duration: 3000,
-  });
+  
+  // Only show toast for actual connection errors, not for other API errors
+  if (error instanceof Error && (
+    error.message.includes('Network Error') || 
+    error.message.includes('ERR_CONNECTION_REFUSED') ||
+    error.message.includes('timeout') ||
+    error.message.includes('ECONNREFUSED')
+  )) {
+    // Only show the toast once per session to avoid spam
+    if (!sessionStorage.getItem('backend-offline-shown')) {
+      toast.error('Backend offline — using mock data', {
+        duration: 5000,
+      });
+      sessionStorage.setItem('backend-offline-shown', 'true');
+    }
+  }
+  
   return fallbackData;
 };
 
@@ -65,9 +87,25 @@ export const apiClient = {
   // Health check
   async getHealth(): Promise<HealthResponse> {
     try {
+      console.log(`Attempting health check to: ${API_BASE_URL}${API_ENDPOINTS.health}`);
       const response = await api.get<HealthResponse>(API_ENDPOINTS.health);
+      console.log('Health check successful:', response.data);
+      
+      // Clear the offline flag since backend is responding
+      sessionStorage.removeItem('backend-offline-shown');
+      
       return response.data;
     } catch (error) {
+      console.error('Health check failed:', error);
+      // For health check, let's be more specific about the error
+      if (error instanceof Error) {
+        console.error('Error details:', {
+          message: error.message,
+          code: (error as any).code,
+          response: (error as any).response?.data,
+          status: (error as any).response?.status
+        });
+      }
       return handleApiError(error, mockHealth);
     }
   },
@@ -76,6 +114,8 @@ export const apiClient = {
   async getModels(): Promise<ModelInfo[]> {
     try {
       const response = await api.get<ModelInfo[]>(API_ENDPOINTS.models);
+      // Clear the offline flag since backend is responding
+      sessionStorage.removeItem('backend-offline-shown');
       return response.data;
     } catch (error) {
       return handleApiError(error, mockModels);
@@ -86,6 +126,8 @@ export const apiClient = {
   async getMetrics(): Promise<MetricsResponse> {
     try {
       const response = await api.get<MetricsResponse>(API_ENDPOINTS.metrics);
+      // Clear the offline flag since backend is responding
+      sessionStorage.removeItem('backend-offline-shown');
       return response.data;
     } catch (error) {
       return handleApiError(error, mockMetrics);
@@ -96,6 +138,8 @@ export const apiClient = {
   async getFeatures(): Promise<FeaturesResponse> {
     try {
       const response = await api.get<FeaturesResponse>(API_ENDPOINTS.features);
+      // Clear the offline flag since backend is responding
+      sessionStorage.removeItem('backend-offline-shown');
       return response.data;
     } catch (error) {
       return handleApiError(error, mockFeatures);
@@ -106,6 +150,8 @@ export const apiClient = {
   async predict(data: PredictBody): Promise<PredictResponse> {
     try {
       const response = await api.post<PredictResponse>(API_ENDPOINTS.predict, data);
+      // Clear the offline flag since backend is responding
+      sessionStorage.removeItem('backend-offline-shown');
       return response.data;
     } catch (error) {
       // Use mock prediction with actual features

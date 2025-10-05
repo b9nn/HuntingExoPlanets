@@ -5,8 +5,8 @@ export function useApiHealth() {
   return useQuery<HealthResponse>({
     queryKey: ["health"],
     queryFn: getHealth,
-    refetchInterval: 30000, // Refetch every 30 seconds
-    retry: 1,
-    staleTime: 10000, // Consider data stale after 10 seconds
+    refetchInterval: 60000, // Refetch every 60 seconds (reduced frequency)
+    retry: 2, // Increased retry count
+    staleTime: 30000, // Consider data stale after 30 seconds
   })
 }

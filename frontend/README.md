@@ -243,7 +243,7 @@ The application can be deployed to any platform supporting Next.js:
 
 ## 📄 License
 
-This project is part of the NASA Space Apps Challenge 2024. See the main repository for license details.
+This project is part of the NASA Space Apps Challenge 2025. See the main repository for license details.
 
 ## 🙏 Acknowledgments
 
@@ -263,6 +263,6 @@ For questions, issues, or contributions:
 
 ---
 
-**Built with ❤️ for NASA Space Apps Challenge 2024**
+**Built with ❤️ for NASA Space Apps Challenge 2025**
 
 *Exploring the cosmos, one exoplanet at a time.*

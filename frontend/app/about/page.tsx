@@ -155,13 +155,13 @@ export default function AboutPage() {
             Development Team
           </CardTitle>
           <CardDescription>
-            Built for NASA Space Apps Challenge 2024
+            Built for NASA Space Apps Challenge 2025
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             <p className="text-muted-foreground">
-              ExoAI was developed as part of the NASA Space Apps Challenge 2024, bringing together 
+              ExoAI was developed as part of the NASA Space Apps Challenge 2025, bringing together 
               experts in machine learning, astronomy, and software development to create an innovative 
               solution for exoplanet discovery and analysis.
             </p>

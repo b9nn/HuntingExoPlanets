@@ -22,7 +22,7 @@ export default function LandingPage() {
             <div className="space-y-4">
               <Badge variant="secondary" className="text-sm">
                 <Sparkles className="mr-1 h-3 w-3" />
-                NASA Space Apps Challenge 2024
+                NASA Space Apps Challenge 2025
               </Badge>
               <h1 className="text-4xl md:text-6xl font-bold tracking-tight">
                 ExoAI
@@ -72,7 +72,7 @@ export default function LandingPage() {
                 <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
                   <Target className="h-6 w-6 text-primary" />
                 </div>
-                <CardTitle>Accuracy >85%</CardTitle>
+                <CardTitle>Accuracy 85%</CardTitle>
                 <CardDescription>
                   Ensemble models achieve superior performance with stacking, 
                   random forest, and gradient boosting techniques
@@ -195,7 +195,7 @@ export default function LandingPage() {
         <div className="container mx-auto px-4 py-12">
           <div className="text-center space-y-4">
             <p className="text-muted-foreground">
-              Built for NASA Space Apps Challenge 2024
+              Built for NASA Space Apps Challenge 2025
             </p>
             <div className="flex justify-center space-x-6">
               <a 
@@ -216,7 +216,7 @@ export default function LandingPage() {
               </a>
             </div>
             <p className="text-sm text-muted-foreground">
-              © 2024 ExoAI Team. All rights reserved.
+              © 2025 ExoAI Team. All rights reserved.
             </p>
           </div>
         </div>
