@@ -1,0 +1,36 @@
+# Python virtual envs
+.venv/
+venv/
+
+# Python caches
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Node/Next.js
+frontend/node_modules/
+frontend/.next/
+frontend/.turbo/
+frontend/.vercel/
+
+# Logs and PIDs
+*.log
+*.pid
+backend_server.log
+frontend_server.log
+backend_server.pid
+frontend_server.pid
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env
+.env.*
+
+# Editor settings
+.vscode/
+.idea/
+

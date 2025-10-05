@@ -10,6 +10,7 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
+  metadataBase: new URL('http://localhost:3000'),
   title: 'ExoAI - Exoplanet Discovery & Classification',
   description: 'Advanced AI-powered exoplanet discovery and classification system using ensemble machine learning models.',
   keywords: ['exoplanet', 'AI', 'machine learning', 'astronomy', 'NASA', 'space'],
@@ -18,6 +19,11 @@ export const metadata: Metadata = {
     title: 'ExoAI - Exoplanet Discovery & Classification',
     description: 'Advanced AI-powered exoplanet discovery and classification system',
     type: 'website',
+  },
+  icons: {
+    icon: '/icon.svg',
+    shortcut: '/icon.svg',
+    apple: '/icon.svg',
   },
 }
 

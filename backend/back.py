@@ -448,8 +448,8 @@ def get_dataset():
         if mission == 'kepler':
             src = os.path.join(docs_dir, 'KOI.csv')
         elif mission == 'k2':
-            # K2 candidates file name in docs snapshot
-            src = os.path.join(docs_dir, 'k2pandc_2025.10.04_22.17.01.csv')
+            # Use provided K2 snapshot if available
+            src = os.path.join(docs_dir, 'k2.csv')
         elif mission == 'tess':
             src = os.path.join(docs_dir, 'TOI.csv')
         else:

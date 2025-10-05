@@ -131,7 +131,7 @@ export default function DatasetsPage() {
                   <div className="flex items-center space-x-2">
                     <Badge variant="outline">
                       <Filter className="mr-1 h-3 w-3" />
-                      {dataset?.rows.length || 0} rows
+                      {(dataset?.rows?.length ?? 0)} rows
                     </Badge>
                   </div>
                 </div>
@@ -144,7 +144,7 @@ export default function DatasetsPage() {
                     <Skeleton className="h-10 w-full" />
                   </div>
                 ) : dataset?.rows ? (
-                  <DatasetTable data={dataset.rows} />
+                  <DatasetTable key={selectedMission} data={dataset.rows} />
                 ) : (
                   <div className="text-center py-8 text-muted-foreground">
                     <Database className="h-12 w-12 mx-auto mb-4 opacity-50" />
