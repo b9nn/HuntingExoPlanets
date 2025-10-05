@@ -1,4 +1,4 @@
-Orbital Period [days],Planetary Radius [Earth Radius],Transit Duration [hours],Transit Depth [ppm],Star’s Effective Temperature [K],Star’s Radius [Solar Radius],Star’s Surface Gravity [cm/s²],Disposition
+Orbital Period,Planetary Radius,Transit Duration,Transit Depth, Star’s Effective Temperature, Star’s Radius, Star’s Surface Gravity, Disposition
 2.1713484,5.8181633,2.0172196,656.8860989,10249.0,2.16986,4.19,FP
 1.9316462,11.2154,3.166,1286.0,7070.0,2.01,4.03,PC
 1.8675574,23.7529,1.408,1500.0,8924.0,5.73,,FP
