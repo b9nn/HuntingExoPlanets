@@ -18,12 +18,12 @@ import seaborn as sns
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier, StackingClassifier, GradientBoostingClassifier
-from sklearn.metrics import roc_curve, auc, precision_recall_curve, average_precision_score
+from sklearn.metrics import classification_report, confusion_matrix, accuracy_score, f1_score
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC
 from sklearn.naive_bayes import GaussianNB
-from sklearn.metrics import classification_report, confusion_matrix, accuracy_score, f1_score
 import joblib
+import os
 
 
 class ExoAI:
@@ -31,25 +31,21 @@ class ExoAI:
     ExoAI: Exoplanet Classification System using Stacking Ensemble on KOI Dataset
     """
     
-    def __init__(self):
-        # initialize storage for model components
+    def __init__(self, low_compute=True):
         self.model = None
         self.scaler = None
         self.label_encoder = None
         self.feature_names = []
+        self.low_compute = low_compute  # switch for lightweight training
         
     def load_data(self, csv_path='../docs/KOI.csv'):
         """Load the KOI dataset"""
-        # read koi csv file, skip comment lines starting with #
         self.koi_data = pd.read_csv(csv_path, comment='#', on_bad_lines='skip', low_memory=False)
-        
         print(f"\nLoaded KOI: {len(self.koi_data)} rows, {len(self.koi_data.columns)} columns")
-        
         return self.koi_data
     
     def preprocess_data(self):
         """Clean and preprocess the KOI data"""
-        # define required features with descriptive names
         required_features = [
             'Orbital Period',
             'Planetary Radius',
@@ -61,276 +57,137 @@ class ExoAI:
         ]
         
         label_col = 'koi_disposition'
-
-        # validate that all required columns are present
         missing_columns = [col for col in required_features if col not in self.koi_data.columns]
-        
         if missing_columns:
-            error_msg = f"\nERROR: Missing required columns in CSV file:\n"
-            for col in missing_columns:
-                error_msg += f"  - {col}\n"
-            error_msg += f"\nRequired columns:\n"
-            error_msg += f"  - Orbital Period\n"
-            error_msg += f"  - Planetary Radius\n"
-            error_msg += f"  - Transit Duration\n"
-            error_msg += f"  - Transit Depth\n"
-            error_msg += f"  - Stellar Effective Temperature\n"
-            error_msg += f"  - Stellar Radius\n"
-            error_msg += f"  - Stellar Surface Gravity\n"
-            raise ValueError(error_msg)
+            raise ValueError(f"Missing required columns: {missing_columns}")
         
-        # extract only the required features (ignore all other columns)
         X = self.koi_data[required_features].copy()
-        X = X.select_dtypes(include=[np.number]).fillna(X.select_dtypes(include=[np.number]).median())
-        
-        # extract labels
+        X = X.select_dtypes(include=[np.number]).fillna(X.median(numeric_only=True))
         y = self.koi_data[label_col]
         
-        # remove rows with missing labels
         valid_indices = ~y.isna()
         X = X[valid_indices]
         y = y[valid_indices]
+
+        # downsample if in low compute mode
+        if self.low_compute:
+            X = X.sample(frac=0.1, random_state=42)
+            y = y.loc[X.index]
         
         print(f"\nKOI Dataset: {X.shape[0]} samples, {X.shape[1]} features")
-        print(f"Using required columns: {', '.join(required_features)}")
-        
         return X, y
     
     def create_stacking_model(self):
-        """Create the stacking ensemble model optimized for accuracy"""
-        print("\nCreating Accuracy-Optimized Stacking Ensemble...")
+        """Create the stacking ensemble model"""
+        print("\nCreating Stacking Ensemble...")
         
-        # define base estimators without class balancing (better for overall accuracy)
+        # lighter estimators if low_compute
+        n_est = 50 if self.low_compute else 200
         base_estimators = [
-            ('rf', RandomForestClassifier(n_estimators=100, random_state=42)),
-            ('et', ExtraTreesClassifier(n_estimators=100, random_state=42)),
-            ('gb', GradientBoostingClassifier(n_estimators=100, random_state=42)),
+            ('rf', RandomForestClassifier(n_estimators=n_est, random_state=42)),
+            ('et', ExtraTreesClassifier(n_estimators=n_est, random_state=42)),
+            ('gb', GradientBoostingClassifier(n_estimators=n_est, random_state=42)),
             ('svm', SVC(probability=True, random_state=42)),
             ('nb', GaussianNB())
         ]
         
-        # create stacking classifier with logistic regression as meta-learner
         self.model = StackingClassifier(
             estimators=base_estimators,
             final_estimator=LogisticRegression(max_iter=2000, random_state=42),
-            cv=5
+            cv=3 if self.low_compute else 5
         )
-        
-        print("   Accuracy-optimized stacking model created with:")
-        print("   - Base: Random Forest, Extra Trees, Gradient Boosting, SVM, Naive Bayes")
-        print("   - Meta: Logistic Regression")
-        print("   - Goal: Maximum overall accuracy")
         
         return self.model
     
     def train_model(self, X_train, y_train, X_val, y_val):
-        """Train stacking model with strategic hyperparameter tuning"""
-        print("\nTraining Accuracy-Optimized Stacking Ensemble...")
+        """Train stacking model"""
+        if self.low_compute:
+            print("\n[Light Mode] Training without GridSearch...")
+            self.model.fit(X_train, y_train)
+        else:
+            print("\n[Full Mode] Training with GridSearchCV...")
+            param_grid = {
+                'rf__n_estimators': [200],
+                'rf__max_depth': [20],
+                'et__n_estimators': [200],
+                'gb__n_estimators': [200],
+                'gb__learning_rate': [0.1],
+                'svm__C': [1.0],
+            }
+            grid_search = GridSearchCV(
+                self.model, param_grid,
+                cv=3, scoring='accuracy',
+                n_jobs=1 if self.low_compute else -1,
+                verbose=1
+            )
+            grid_search.fit(X_train, y_train)
+            self.model = grid_search.best_estimator_
         
-        # Strategic hyperparameter search - 48 fits (16 combinations × 3 folds)
-        param_grid = {
-            'rf__n_estimators': [150, 200],
-            'rf__max_depth': [20, None],
-            'rf__min_samples_leaf': [1, 2],
-            'et__n_estimators': [150],
-            'et__max_depth': [None],
-            'gb__n_estimators': [100, 150],
-            'gb__learning_rate': [0.1],
-            'gb__max_depth': [5, 7],
-            'svm__C': [1.0, 10.0],
-            'svm__gamma': ['scale']
-        }
-        
-        # perform grid search optimizing for accuracy
-        print("   Searching hyperparameters (48 fits total)...")
-        grid_search = GridSearchCV(
-            self.model, 
-            param_grid, 
-            cv=3, 
-            scoring='accuracy',  # Optimize for overall accuracy
-            verbose=1,
-            n_jobs=-1  # Use all CPU cores
-        )
-        
-        grid_search.fit(X_train, y_train)
-        self.model = grid_search.best_estimator_
-        
-        print(f"\nBest parameters found:")
-        for param, value in grid_search.best_params_.items():
-            print(f"   {param}: {value}")
-        print(f"Best CV Score: {grid_search.best_score_:.4f}")
-        
-        # evaluate on validation set
         y_pred = self.model.predict(X_val)
         accuracy = accuracy_score(y_val, y_pred)
         f1 = f1_score(y_val, y_pred, average='weighted')
         print(f"\nValidation Accuracy: {accuracy:.4f}")
         print(f"Validation F1-Score: {f1:.4f}")
-        
         return accuracy
     
-    def tune_threshold(self, X_val, y_val):
-        """Evaluate on validation set (multi-class doesn't need threshold tuning)"""
-        print("\nEvaluating on validation set...")
-        
-        # For multi-class, use argmax of probabilities
-        y_pred = self.model.predict(X_val)
-        val_accuracy = accuracy_score(y_val, y_pred)
-        
-        # No threshold needed for multi-class
-        self.best_threshold = None
-        
-        print(f"   Validation Accuracy: {val_accuracy:.4f}")
-        return None, val_accuracy
-
     def evaluate_model(self, X_test, y_test):
         """Evaluate model on test set"""
         print("\n" + "="*60)
-        print("Stacking Model Evaluation Results:")
+        print("Evaluation Results")
         print("="*60)
-
-        # Multi-class prediction using argmax
-        y_pred = self.model.predict(X_test)
-
-        accuracy = accuracy_score(y_test, y_pred)
-        print(f"\nTest Accuracy: {accuracy:.4f}")
-        print("\nClassification Report:")
-        print(classification_report(y_test, y_pred))
-
-        cm = confusion_matrix(y_test, y_pred)
-        print("\nConfusion Matrix:")
-        print(cm)
-
-        return {
-            'accuracy': accuracy,
-            'predictions': y_pred,
-            'confusion_matrix': cm
-        }
-
-    def predict_exoplanet(self, features):
-        """Make prediction for a new exoplanet candidate"""
-        # Get prediction and probabilities
-        prediction = self.model.predict([features])[0]
-        probs = self.model.predict_proba([features])[0]
         
-        # Decode the prediction label
-        label = self.label_encoder.inverse_transform([prediction])[0]
-        confidence = probs[prediction]
-
-        print("\nPredicting Exoplanet Classification...")
-        print(f"Prediction: {label} (class {prediction})")
-        print(f"Confidence: {confidence:.3f}")
-        print(f"All probabilities: {probs}")
-        return prediction, probs
+        y_pred = self.model.predict(X_test)
+        acc = accuracy_score(y_test, y_pred)
+        print(f"Test Accuracy: {acc:.4f}")
+        print(classification_report(y_test, y_pred))
+        
+        cm = confusion_matrix(y_test, y_pred, labels=np.unique(y_test))
+        print("Confusion Matrix:\n", cm)
+        return {'accuracy': acc, 'predictions': y_pred, 'confusion_matrix': cm}
     
     def save_model(self, output_dir='../model'):
-        """Save trained model for future use"""
-        print("\nSaving Model...")
-        
-        # serialize model and preprocessors to disk
-        import os
+        """Save trained model"""
         os.makedirs(output_dir, exist_ok=True)
-        
         joblib.dump(self.model, f"{output_dir}/exoai_stacking_model.pkl")
         joblib.dump(self.scaler, f"{output_dir}/exoai_scaler.pkl")
         joblib.dump(self.label_encoder, f"{output_dir}/exoai_label_encoder.pkl")
+        print(f"\nModel saved to {output_dir}/")
         
-        print(f"   Model saved successfully to {output_dir}/")
-    
-    def create_visualizations(self, X_test, y_test, y_pred, output_dir='../docs'):
-        """Create comprehensive visualizations"""
-        print("\nCreating Visualizations...")
-        
-        import os
-        os.makedirs(output_dir, exist_ok=True)
-        
-        fig = plt.figure(figsize=(12, 5))
-        
-        # plot confusion matrix heatmap
-        plt.subplot(1, 2, 1)
-        cm = confusion_matrix(y_test, y_pred)
-        sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', cbar_kws={'label': 'Count'})
-        plt.title('Confusion Matrix - Stacking Ensemble')
-        plt.ylabel('True Label')
-        plt.xlabel('Predicted Label')
-        
-        # plot top 10 feature importances from Random Forest base estimator
-        plt.subplot(1, 2, 2)
-        rf_model = self.model.named_estimators_['rf']
-        importance = rf_model.feature_importances_
-        
-        top_indices = np.argsort(importance)[-10:]
-        top_features = [self.feature_names[i] for i in top_indices]
-        top_importance = importance[top_indices]
-        
-        plt.barh(range(len(top_features)), top_importance, color='steelblue')
-        plt.yticks(range(len(top_features)), top_features)
-        plt.title('Top Feature Importance (Random Forest)')
-        plt.xlabel('Importance')
-        
-        plt.tight_layout()
-        output_path = f'{output_dir}/exoai_stacking_analysis.png'
-        plt.savefig(output_path, dpi=300, bbox_inches='tight')
-        plt.close()
-        
-        print(f"   Visualizations saved to {output_path}")
-
 
 def main():
-    """Main ExoAI pipeline"""
-    print("ExoAI: Exoplanet Discovery and Classification System")
-    print("Stacking Ensemble Classifier - KOI Dataset")
+    print("ExoAI: Exoplanet Discovery and Classification")
     print("="*60)
     
-    # initialize exoai system
-    exoai = ExoAI()
+    # ⚡ switch here: low_compute=True for local, False for full run
+    exoai = ExoAI(low_compute=True)
     
-    # load and preprocess koi dataset
-    koi_data = exoai.load_data()
+    # load + preprocess
+    exoai.load_data()
     X, y = exoai.preprocess_data()
     
-    # encode categorical labels to numerical format
     le = LabelEncoder()
     y_encoded = le.fit_transform(y)
     exoai.label_encoder = le
     
-    # split data: 70% train, 15% validation, 15% test
-    X_train, X_temp, y_train, y_temp = train_test_split(
-        X, y_encoded, test_size=0.3, random_state=42, stratify=y_encoded
-    )
-    X_val, X_test, y_val, y_test = train_test_split(
-        X_temp, y_temp, test_size=0.5, random_state=42, stratify=y_temp
-    )
+    X_train, X_temp, y_train, y_temp = train_test_split(X, y_encoded, test_size=0.3, stratify=y_encoded, random_state=42)
+    X_val, X_test, y_val, y_test = train_test_split(X_temp, y_temp, test_size=0.5, stratify=y_temp, random_state=42)
     
     exoai.feature_names = list(X.columns)
     
-    # standardize features using z-score normalization
     scaler = StandardScaler()
-    X_train_scaled = scaler.fit_transform(X_train)
-    X_val_scaled = scaler.transform(X_val)
-    X_test_scaled = scaler.transform(X_test)
+    X_train = scaler.fit_transform(X_train)
+    X_val = scaler.transform(X_val)
+    X_test = scaler.transform(X_test)
     exoai.scaler = scaler
     
-    # build and train stacking ensemble
+    # train + evaluate
     exoai.create_stacking_model()
-    val_accuracy = exoai.train_model(X_train_scaled, y_train, X_val_scaled, y_val)
-    
-    # final validation check
-    exoai.tune_threshold(X_val_scaled, y_val)
-    
-    # evaluate on test set
-    results = exoai.evaluate_model(X_test_scaled, y_test)
-    
-    # create visualizations and save model
-    exoai.create_visualizations(X_test, y_test, results['predictions'])
+    exoai.train_model(X_train, y_train, X_val, y_val)
+    results = exoai.evaluate_model(X_test, y_test)
     exoai.save_model()
     
-    # demonstrate prediction on single example
-    print("\n" + "="*60)
-    print("Example Prediction:")
-    
-    print(f"\nExoAI Pipeline Complete!")
-    print(f"Final Test Accuracy: {results['accuracy']:.4f}")
+    print(f"\nPipeline Complete! Final Test Accuracy: {results['accuracy']:.4f}")
+
 
 if __name__ == "__main__":
     main()
